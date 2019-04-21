@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" id="ng-app" ng-app="mapApp"
+<head>
+<meta charset="utf-8">
+<style type="text/css">
+    /* latin */
+    @font-face {
+        font-family: 'Arvo';
+        font-style: normal;
+        font-weight: 400;
+        src: local('Arvo'), url(./tDbD2oWUg0MKqScQ7Q.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    #threatmap {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        max-width:100%;
+        max-height:100%
+    }
+    html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+    }
+    /* Connections Container */
+    .ng-enter, .ng-leave, .ng-move {
+    -webkit-transition: 1s linear all;
+    -moz-transition: 1s linear all;
+    -o-transition: 1s linear all;
+    transition: 1s linear all;
+    -webkit-transition-property: all !important;
+    transition-property: all !important;
+    position: relative;
+    }
+    table {
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
+    #latestConnectionsContainer .ng-enter {
+        opacity: 0;
+    }
+    #latestConnectionsContainer .ng-enter.ng-enter-active {
+        opacity: 1;
+    }
+    #latestConnectionsContainer .ng-leave.ng-leave-active {
+        opacity: 0;
+    }
+    #latestConnectionsContainer .ng-move {
+        opacity: 0.5;
+    }
+    #latestConnectionsContainer .ng-move.ng-move-active {
+        opacity: 1;
+    }
+    #spacerRow div {
+        line-height: 6px;
+    }
+    #latestConnectionsContainerLeft #tableContainer {
+        display: table;
+        width: 100%;
+    }
+    #latestConnectionsContainerLeft #tableHeaderRow {
+        display: table-row;
+    }
+    #latestConnectionsContainerLeft #tableHeaderRow div {
+        font-weight: bold;
+        color: #771cdd;
+    }
+    #spacerRow div {
+        line-height: 6px;
+    }
+    .connectionRow {
+        display: table-row;
+        position: relative;
+    }
+    .connectionRow .connectionContainer {
+        display: block;
+        max-width: 300px;
+    }
+    .connectionRow p {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .connectionRow div, #latestConnectionsContainerLeft #tableHeaderRow div {
+        display: table-cell;
+        font-size: 0.8em;
+        padding: 2px 10px;
+    }
+
+    .connectionRow div {
+        padding: 1pt 10px;
+        opacity: 0;
+    }
+
+    #latestConnectionsContainer {
+        position: absolute;
+        bottom: 25px;
+        z-index: 999999;
+        right: 25px;
+        color: #fff;
+        font-family: 'Arvo';
+    }
+    #latestConnectionsContainerLeft {
+        float: left;
+        height: 10.75em;
+        background-color: #1c1217;
+        background-color: rgba(51, 51, 51, 0.5);
+        padding: 0.5em;
+        width: 45em;
+        overflow: hidden;
+        border-style: solid;
+        border-width: 1px 1px 1px 1px;
+        border-color: #771cdd;
+    }
+    #timeCol, .timeCol {
+        width: 15%;
+    }
+    #sourceCountryCol, .sourceCountryCol {
+        width: 35%;
+    }
+    #sourceIpCol, .sourceIpCol {
+        width: 35%;
+    }
+    #sourcePortCol, .sourcePortCol {
+        width: 15%;
+    }
+    .timeCol, .sourceCountryCol, .sourceIpCol, .sourcePortCol {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #fe0000;
+    }
+    /* END Connections Container */
+    body {
+        margin: 0;
+        padding: 0;
+        background: black;
+    }
+</style>
+
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="https://d3js.org/d3.geo.projection.v0.min.js"></script>
+<script src="https://d3js.org/topojson.v1.min.js"></script>
+<script src="https://datamaps.github.io/scripts/datamaps.world.min.js?v=1"></script>
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<script src="jquery.simplemodal-1.4.4.js"></script>
+<script src="angular.min.js"></script>
+<script type="angular-animate.js"></script>
+</head>
+
+<body ng-controller="MapCtrl">
+    <center><div id="threatmap"></div></center>
+
+<script>
+var map = new Datamap({
+        scope: 'world',
+        element: document.getElementById('threatmap'),
+        projection: 'equirectangular', //  winkel3
+        // change the projection to something else only if you have absolutely no cartographic sense
+        fills: { defaultFill: 'black', },
+        geographyConfig: {
+            dataUrl: null,
+            hideAntarctica: true,
+            borderWidth: 0.75,
+            borderColor: '#4393c3',
+            popupTemplate: function(geography, data) {
+            return '<div class="hoverinfo" style="color:white;background:black">' +
+                geography.properties.name + '</div>';
+            },
+            popupOnHover: true,
+            highlightOnHover: true,
+            highlightFillColor: 'red',
+            highlightBorderColor: 'rgba(250, 15, 160, 0.2)',
+            highlightBorderWidth: 2
+        },
+        arcConfig: {
+            strokeColor: '#DD1C77',
+            strokeWidth: 1,
+            arcSharpness: 1,
+            animationSpeed: 3000, // Milliseconds
+            popupOnHover: true, // True to show the popup while hovering
+            popupTemplate: function(geography, data) { // This function should just return a string
+            // Case with latitude and longitude
+                if ( ( data.origin && data.destination ) && data.origin.latitude && data.origin.longitude && data.destination.latitude && data.destination.longitude ) {
+                  return '<div class="hoverinfo"><strong>Arc</strong><br>Origin: ' + JSON.stringify(data.origin) + '<br>Destination: ' + JSON.stringify(data.destination) + '</div>';
+                }
+                // Case with only country name
+                else if ( data.origin && data.destination ) {
+                  return '<div class="hoverinfo"><strong>Arc</strong><br>' + data.origin + ' -> ' + data.destination + '</div>';
+                }
+                // Missing information
+                else {
+                  return '';
+                }
+            }
+        }
+    })
+
+// we maintain a fixed queue of "attacks" via this class
+function FixedQueue( size, initialValues ){
+    initialValues = (initialValues || []);
+    var queue = Array.apply( null, initialValues );
+    queue.fixedSize = size;
+    queue.push = FixedQueue.push;
+    queue.splice = FixedQueue.splice;
+    queue.unshift = FixedQueue.unshift;
+    FixedQueue.trimTail.call( queue );
+    return( queue );
+}
+
+FixedQueue.trimHead = function(){
+  if (this.length <= this.fixedSize){ return; }
+  Array.prototype.splice.call( this, 0, (this.length - this.fixedSize) );
+};
+FixedQueue.trimTail = function(){
+  if (this.length <= this.fixedSize) { return; }
+  Array.prototype.splice.call( this, this.fixedSize, (this.length - this.fixedSize)
+  );
+};
+FixedQueue.wrapMethod = function( methodName, trimMethod ){
+  var wrapper = function(){
+    var method = Array.prototype[ methodName ];
+    var result = method.apply( this, arguments );
+    trimMethod.call( this );
+    return( result );
+  };
+  return( wrapper );
+};
+FixedQueue.push = FixedQueue.wrapMethod( "push", FixedQueue.trimHead );
+FixedQueue.splice = FixedQueue.wrapMethod( "splice", FixedQueue.trimTail );
+FixedQueue.unshift = FixedQueue.wrapMethod( "unshift", FixedQueue.trimTail );
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function removeArc(id) {  
+    var all = d3.selectAll('path.datamaps-arc');
+    var sel = all.filter(function(data) {
+        return data.id === id;
+    });
+    sel.transition().duration(2000).style("opacity", 0).remove();
+};
+async function demo() {
+    var i;
+    var hits = FixedQueue( 10, [  ] );
+    for (i = 0; i < 10; i++) {
+        await sleep(500);
+        hits.push(
+                    {
+                    id: i,
+                    origin: {
+                        latitude: 60.1282 + i/10,
+                        longitude: 18.6435
+                    },
+                    destination: {
+                        latitude: 35.8617,
+                        longitude: 104.1954
+                    },
+                    options: {
+                        strokeWidth: 2,
+                        strokeColor: 'rgba(100, 10, 200, 0.4)',
+                        greatArc: true
+                    }
+
+                }
+        );
+        map.arc(
+            hits,
+            {
+                strokeWidth: 0.5, arcSharpness: 3.5 + i/10
+            }
+        );
+    }
+    for (i = 0; i < 10; i++) {
+        removeArc(i)
+    }
+}
+demo();
+// self.latLngToXY( lat, lng )
+</script>
+<div id="latestConnectionsContainer">
+    <div id="latestConnectionsContainerLeft">
+        <div id="tableContainer">
+            <div id="tableHeaderRow">
+                <div id=timeCol>TIME</div>
+                <div id=sourceCountryCol>COUNTRY</div>
+                <div id=sourceIpCol>IP</div>
+                <div id=sourcePortCol>PORT</div>
+            </div>
+
+            <div id="spacerRow" class="connectionRow">
+                <div>
+                    &nbsp;
+                </div>
+            </div>
+            <script type="text/javascript">
+                var app = angular.module("mapApp", []);
+                app.controller('MapCtrl', function($scope) {
+                $scope.latestConnections = [
+                    {country:'Germany', ip:'125.25.25.11', port:'25'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'Australia', ip:'123.11.112.32', port:'80'},
+                    {country:'United States of America', ip:'33.42.123.33', port:'443'}
+                ];
+                });
+            </script>
+            <div ng-repeat="connection in latestConnections" class="connectionRow">
+                <div class="timeCol" inline-animation='{"properties":{"opacity":1},"duration":500,"easing":"swing"}' style="opacity: 1;">
+                    <p>
+                        18:21:31
+                    </p>
+                </div>
+                <div class="sourceCountryCol" inline-animation='{"properties":{"opacity":1},"duration":500,"easing":"swing"}' style="opacity: 1;">
+                    <p>
+                        {{connection.country}}
+                    </p>
+                </div>
+                <div class="sourceIpCol" inline-animation='{"properties":{"opacity":1},"duration":500,"easing":"swing"}' style="opacity: 1;">
+                    <p>
+                        {{connection.ip}}
+                    </p>
+                </div>
+                <div class="sourcePortCol" inline-animation='{"properties":{"opacity":1},"duration":500,"easing":"swing"}' style="opacity: 1;">
+                    <p>
+                        {{connection.port}}
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
