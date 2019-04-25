@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" id="ng-app" ng-app="mapApp"
+<html lang="en" id="ng-app" ng-app="mapApp">
 <head>
 <meta charset="utf-8">
 <style type="text/css">
@@ -20,12 +20,12 @@
         max-height:100%
     }
     html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    font-size: 100%;
-    font: inherit;
-    vertical-align: baseline;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font-size: 100%;
+        font: inherit;
+        vertical-align: baseline;
     }
     /* Connections Container */
     .ng-enter, .ng-leave, .ng-move {
@@ -148,11 +148,74 @@
 <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 <script src="jquery.simplemodal-1.4.4.js"></script>
 <script src="angular.min.js"></script>
-<script type="angular-animate.js"></script>
+<script src="angular-animate.js"></script>
 </head>
 
 <body ng-controller="MapCtrl">
-    <center><div id="threatmap"></div></center>
+<div id="threatmap">
+    <div id="latestConnectionsContainer" ng-drop="true">
+        <div id="latestConnectionsContainerLeft">
+            <div id="tableContainer">
+                <div id="tableHeaderRow">
+                    <div id=timeCol>TIME</div>
+                    <div id=sourceCountryCol>COUNTRY</div>
+                    <div id=sourceIpCol>IP</div>
+                    <div id=sourcePortCol>PORT</div>
+                </div>
+
+                <div id="spacerRow" class="connectionRow">
+                    <div>
+                        &nbsp;
+                    </div>
+                </div>
+                <div ng-repeat="connection in latestConnections" class="connectionRow">
+                    <div class="timeCol" style="opacity: 1;">
+                        <p>
+                            18:21:31
+                        </p>
+                    </div>
+                    <div class="sourceCountryCol" style="opacity: 1;">
+                        <p>
+                            {{connection.country}}
+                        </p>
+                    </div>
+                    <div class="sourceIpCol" style="opacity: 1;">
+                        <p>
+                            {{connection.ip}}
+                        </p>
+                    </div>
+                    <div class="sourcePortCol" style="opacity: 1;">
+                        <p>
+                            {{connection.port}}
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var app = angular.module("mapApp", ['ngAnimate']);
+    app.controller('MapCtrl', function($scope) {
+    $scope.latestConnections = [
+        {country:'Germany', ip:'125.25.25.11', port:'25'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'United States of America', ip:'33.42.123.33', port:'443'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'Australia', ip:'123.11.112.32', port:'80'},
+        {country:'United States of America', ip:'33.42.123.33', port:'443'}
+    ];
+    });
+</script>
 
 <script>
 var map = new Datamap({
@@ -179,21 +242,22 @@ var map = new Datamap({
         arcConfig: {
             strokeColor: '#DD1C77',
             strokeWidth: 1,
-            arcSharpness: 1,
+            arcSharpness: 2,
             animationSpeed: 3000, // Milliseconds
+            popUp: true,
             popupOnHover: true, // True to show the popup while hovering
             popupTemplate: function(geography, data) { // This function should just return a string
             // Case with latitude and longitude
                 if ( ( data.origin && data.destination ) && data.origin.latitude && data.origin.longitude && data.destination.latitude && data.destination.longitude ) {
-                  return '<div class="hoverinfo"><strong>Arc</strong><br>Origin: ' + JSON.stringify(data.origin) + '<br>Destination: ' + JSON.stringify(data.destination) + '</div>';
+                    return '<div class="hoverinfo" style="color:white;background:black">' + geography.properties.name + '</div>';
                 }
                 // Case with only country name
                 else if ( data.origin && data.destination ) {
-                  return '<div class="hoverinfo"><strong>Arc</strong><br>' + data.origin + ' -> ' + data.destination + '</div>';
+                    return '<div class="hoverinfo" style="color:white;background:black">' + geography.properties.name + '</div>';
                 }
                 // Missing information
                 else {
-                  return '';
+                    return '';
                 }
             }
         }
@@ -242,7 +306,7 @@ function removeArc(id) {
     var sel = all.filter(function(data) {
         return data.id === id;
     });
-    sel.transition().duration(2000).style("opacity", 0).remove();
+    sel.transition().duration(6000).style("opacity", 0).remove();
 };
 async function demo() {
     var i;
@@ -253,7 +317,7 @@ async function demo() {
                     {
                     id: i,
                     origin: {
-                        latitude: 60.1282 + i/10,
+                        latitude: 60.1282,
                         longitude: 18.6435
                     },
                     destination: {
@@ -271,7 +335,7 @@ async function demo() {
         map.arc(
             hits,
             {
-                strokeWidth: 0.5, arcSharpness: 3.5 + i/10
+                arcSharpness: 0.5 + Math.random() * 5
             }
         );
     }
@@ -280,68 +344,15 @@ async function demo() {
     }
 }
 demo();
-// self.latLngToXY( lat, lng )
+
+if (window.File && window.FileReader && window.FileList && window.Blob) {
+  // Great success! All the File APIs are supported.
+} else {
+  alert('The File APIs are not fully supported in this browser.');
+}
+
+
 </script>
-<div id="latestConnectionsContainer">
-    <div id="latestConnectionsContainerLeft">
-        <div id="tableContainer">
-            <div id="tableHeaderRow">
-                <div id=timeCol>TIME</div>
-                <div id=sourceCountryCol>COUNTRY</div>
-                <div id=sourceIpCol>IP</div>
-                <div id=sourcePortCol>PORT</div>
-            </div>
-
-            <div id="spacerRow" class="connectionRow">
-                <div>
-                    &nbsp;
-                </div>
-            </div>
-            <script type="text/javascript">
-                var app = angular.module("mapApp", []);
-                app.controller('MapCtrl', function($scope) {
-                $scope.latestConnections = [
-                    {country:'Germany', ip:'125.25.25.11', port:'25'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'Australia', ip:'123.11.112.32', port:'80'},
-                    {country:'United States of America', ip:'33.42.123.33', port:'443'}
-                ];
-                });
-            </script>
-            <div ng-repeat="connection in latestConnections" class="connectionRow">
-                <div class="timeCol" inline-animation='{"properties":{"opacity":1},"duration":500,"easing":"swing"}' style="opacity: 1;">
-                    <p>
-                        18:21:31
-                    </p>
-                </div>
-                <div class="sourceCountryCol" inline-animation='{"properties":{"opacity":1},"duration":500,"easing":"swing"}' style="opacity: 1;">
-                    <p>
-                        {{connection.country}}
-                    </p>
-                </div>
-                <div class="sourceIpCol" inline-animation='{"properties":{"opacity":1},"duration":500,"easing":"swing"}' style="opacity: 1;">
-                    <p>
-                        {{connection.ip}}
-                    </p>
-                </div>
-                <div class="sourcePortCol" inline-animation='{"properties":{"opacity":1},"duration":500,"easing":"swing"}' style="opacity: 1;">
-                    <p>
-                        {{connection.port}}
-                    </p>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
 
 </body>
 </html>
